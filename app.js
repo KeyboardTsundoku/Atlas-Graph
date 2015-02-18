@@ -1,1 +1,1 @@
-angular.module('Atlas-Graph', ['search', 'graph']);
+angular.module('Atlas-Graph', ['search', 'graph.render']);
