@@ -5,8 +5,33 @@ angular.module('graph.process', ['search'])
     $scope.data = Query.getDetail(term);
     //console.log($scope.data);
     //$scope.$apply();
-    
+    $scope.flag = false;
     graphService.addData($scope.data);
+  });
+
+  $scope.sigma = new sigma({
+    graph: {nodes: [], edges: []},
+    renderer: {
+      container: document.getElementById('container'),
+      type: 'canvas'
+    },
+    settings: {
+      edgeLabelSize: 'proportional',
+      edgeColor: 'default',
+      defaultEdgeColor: 'red'
+    }
+  });
+   
+  $scope.flag = false;
+
+  $scope.$on('graph.update', function(event) {
+    console.log(graphService.graphList.nodes);
+    console.log(graphService.graphList.edges);
+    console.log($scope.sigma.graph.clear());
+    var g = {'nodes': graphService.graphList.nodes, 'edges': graphService.graphList.edges};
+    console.log($scope.sigma.graph.read(g));
+    console.log($scope.sigma.refresh());
+    $scope.flag = true;
   });
   
   //$scope.data = Query.getDetail("Australia");
@@ -39,11 +64,17 @@ angular.module('graph.process', ['search'])
       }
       */
 
-      nodes.push({id: data["geonameId"], label: data["name"], color: '#fff', x: 0, y: 0, size: 1});
-      nodes.push({id: (data["geonameId"] + ":" + data["toponymName"]), label: data["toponymName"], color: '#000', x: 1, y: 1, size: 1 });
-      edges.push({id:"toponymName", source: data["geonameId"], target: (data["geonameId"] + ":" + data["toponymName"]), label: "toponymName"});
-      
-      service.graphList['nodes'] = nodes;
+      // put name at the center
+      nodes.push({'id': data["geonameId"], 'label': data["name"], 'color': '#fff', 'x': 500, 'y': 200, 'size': 2});
+
+      // put everything else around it
+      for (var key in data) {
+        if (key != "name" && key != "countryName" && key != "geonameId") {
+          nodes.push({'id': (data["geonameId"] + ":" + data[key]), 'label': data[key], 'color': '#000', 'x': (Math.random() * 1000 + 1), 'y': (Math.random() * 400 + 1), 'size': 1 });
+          edges.push({'id': (data["geonameId"] + key), 'source': data["geonameId"], 'target': (data["geonameId"] + ":" + data[key]), 'label': key});
+        }
+      }
+            service.graphList['nodes'] = nodes;
       service.graphList['edges'] =  edges;
       $rootScope.$broadcast('graph.update');
     }

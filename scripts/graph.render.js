@@ -2,30 +2,9 @@ angular.module('graph.render', ['graph.process'])
 .directive('agGraph',['graphService', function (Graph) {
   return {
     restrict: 'E',
-    templateUrl: 'partials/graph.html',
-    controller: ['$scope', function($scope) {
-      $scope.$on('graph.update', function(event) {
-        console.log("updating the graph");
-        $scope.graph = Graph.graphList;
-        //console.log(Graph.graphList);
-
-        //var graph = {nodes: Graph.nodes, edges: Graph.edges};
-
-        console.log($scope.graph);
-        var s = new sigma({
-          graph: $scope.graph,
-          renderer: {
-            container: document.getElementById('container'),
-            type: 'canvas'
-          },
-          settings: {
-            edgeLabelSize: 'proportional'
-          }
-        });
-     });  
-    }]
+    templateUrl: 'partials/graph.html'
   };
-}]);
+}])
 
 /**<script>
     //initialize sigma
