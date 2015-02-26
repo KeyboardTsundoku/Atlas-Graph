@@ -1,5 +1,5 @@
 angular.module('search', [])
-.directive('agSearch', ['Query', function(Query) {
+.directive('agSearch', ['queryService', function(Query) {
   return {
     restrict: 'E',
     controller: ['$scope', '$http',function($scope, $http) {
@@ -32,7 +32,7 @@ angular.module('search', [])
     templateUrl: 'partials/search.html'
   };
 }])
-.service('Query', ['$rootScope', function($rootScope) {
+.service('queryService', ['$rootScope', function($rootScope) {
   var service = {
     details: {},
     queries: [],
