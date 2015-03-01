@@ -36,20 +36,9 @@ angular.module('render', ['process'])
     templateUrl: 'partials/graph.html'
   };
 }])
-.controller('graphController',['$scope', 'queryService', 'graphService', function($scope, Query, graphService) {
+.controller('graphController',['$scope', 'queryService', 'graphService', function($scope, Query, Graph) {
 
-  /*
-  $scope.$on('query.update', function(event) {
-    var term = Query.getRecentQuery();
-    $scope.data = Query.getDetail(term);
-    //console.log($scope.data);
-    //$scope.$apply();
-    $scope.flag = false;
-    graphService.addData($scope.data);
-  });
-  */
-
-  $scope.sigma = new sigma({
+    $scope.sigma = new sigma({
     graph: {nodes: [], edges: []},
     renderer: {
       container: document.getElementById('container'),
@@ -75,20 +64,35 @@ angular.module('render', ['process'])
    
   var dragListener = sigma.plugins.dragNodes($scope.sigma, $scope.sigma.renderers[0]);
 
+  // double click event triggers action on enabled nodes
   $scope.sigma.bind('doubleClickNode', function(e) {
     console.log(e);
-    console.log(graphService.enabledNode(e.data.node));
-  });
-  //$scope.flag = false;
+    console.log(Graph.enabledNode(e.data.node));
 
+    if (Graph.enabledNode(e.data.node)) {
+      console.log("double click event to grab children");
+      $scope.$root.$broadcast('graph.getChildren', e.data.node); //show children
+    }
+  });
+
+  $scope.sigma.bind('clickNode', function(e) {
+    console.log(e.data.node);
+    //console.log();
+
+    if (Graph.centerNode(e.data.node)) {
+      console.log("left click event to show details");
+      $scope.$root.$broadcast('graph.showDetails', e.data.node); // show details
+    }
+  });
+
+  // update the graph 
   $scope.$on('graph.update', function(event) {
-    console.log(graphService.graphList.nodes);
-    console.log(graphService.graphList.edges);
+    console.log(Graph.graphList.nodes);
+    console.log(Graph.graphList.edges);
     $scope.sigma.graph.clear();
-    var g = {'nodes': graphService.graphList.nodes, 'edges': graphService.graphList.edges};
+    var g = {'nodes': Graph.graphList.nodes, 'edges': Graph.graphList.edges};
     $scope.sigma.graph.read(g);
     $scope.sigma.refresh();
-    $scope.flag = true;
   });
   
   //$scope.data = Query.getDetail("Australia");
@@ -96,10 +100,19 @@ angular.module('render', ['process'])
 .service('graphService', ['$rootScope', function($rootScope) {
   var activeNodeColor = '#fff';
   var inactiveNodeColor = '#000';
+  var centerNodeSize = 5;
+  var endNodeSize = 2;
   var edgeColor = '';
+  var xCenter = 500;
+  var yCenter = 200;
+
+  var homeTag = 'first';
+  var detailsTag = 'information';
+  var childrenTag = 'subdivision';
 
   var service = {
     graphList: {},
+    breadCrumbs: [],
 
     enabledNode: function(node) {
       if (node.color == activeNodeColor) {
@@ -108,74 +121,170 @@ angular.module('render', ['process'])
       return false;
     },
 
-    addData: function(data) {
+    centerNode: function(node) {
+      if (node.x == xCenter && node.y == yCenter) {
+        return true;
+      }
+      return false;
+    },
+
+    showChildren: function(guardian, children) {
       var nodes = [];
       var edges = [];
       
-      //var keyList = [];
-      //var valList = [];
-      
-      /*
-      for (var key in data) {
-        keyList.push(key);
+      var keyList = [];
+      var valList = [];
+
+      console.log(guardian);
+      console.log(children);
+      // make center node guardian
+      nodes.push({'id': guardian['id'], 'label': guardian['name'], 'color': activeNodeColor, 'x': xCenter, 'y': yCenter, 'size': centerNodeSize});
+
+      for (var index in children) {
+        var child = children[index];
+        var xPosition = Math.floor((Math.random() * 1000) + 1);
+        var yPosition = Math.floor((Math.random() * 400) + 1);
+        nodes.push({'id': child['id'], 'label': child['name'], 'color': activeNodeColor, 'x': xPosition, 'y': yPosition, 'size': endNodeSize});
+        edges.push({'id': (guardian['id'] + '-' + child['id']), 'source': guardian['id'], 'target': child['id'], 'label': child['relationship'], 'size': 2});
       }
-
-      for (var index in keyList) {
-        valList.push(data[keyList[index]]);
-      }
+        
+      service.breadCrumbs.push({'node': guardian.id, 'label': guardian.name, 'mode': childrenTag});
       
-      console.log(keyList);
-      console.log(valList);
-      for (var index in keyList) {
-        service.graphList[keyList[index]] = valList[index];
-      }
-      */
-
-      var source = 'geonameId';
-      // put name at the center
-      nodes.push({'id': data[source], 'label': data['name'], 'color': activeNodeColor, 'x': 500, 'y': 200, 'size': 2});
-      
-      //countryCode
-      var key = 'countryCode';
-      nodes.push({'id': (data[source] + ':' + data[key]), 'label': data[key], 'color': inactiveNodeColor, 'x': 286, 'y': 131, 'size': 1 });
-      edges.push({'id': (data[source] + '-' + key), 'source': data[source], 'target': (data[source] + ':' + data[key]), 'label': key, 'size': 2});
-      
-      //toponymName
-      key = 'toponymName';
-      nodes.push({'id': (data[source] + ':' + data[key]), 'label': data[key], 'color': inactiveNodeColor, 'x': 700, 'y': 131, 'size': 1 });
-      edges.push({'id': (data[source] + '-' + key), 'source': data[source], 'target': (data[source] + ':' + data[key]), 'label': key, 'size': 2});
-
-      //population
-      key = 'population';
-      nodes.push({'id': (data[source] + ':' + data[key]), 'label': '' + data[key], 'color': inactiveNodeColor, 'x': 266, 'y': 313, 'size': 1 });
-      edges.push({'id': (data[source] + '-' + key), 'source': data[source], 'target': (data[source] + ':' + data[key]), 'label': key, 'size': 2});
-
-      //lat
-      key = 'lat';
-      nodes.push({'id': (data[source] + ':' + data[key]), 'label': data[key], 'color': inactiveNodeColor, 'x': 230, 'y': 205, 'size': 1 });
-      edges.push({'id': (data[source] + '-' + key), 'source': data[source], 'target': (data[source] + ':' + data[key]), 'label': key, 'size': 2});
-
-      //lng
-      key = 'lng';
-      nodes.push({'id': (data[source] + ':' + data[key]), 'label': data[key], 'color': inactiveNodeColor, 'x': 509, 'y': 350, 'size': 1 });
-      edges.push({'id': (data[source] + '-' + key), 'source': data[source], 'target': (data[source] + ':' + data[key]), 'label': key, 'size': 2});
-
-      //fcodeName
-      key = 'fcodeName';
-      nodes.push({'id': (data[source] + ":" + data[key]), 'label': data[key], 'color': inactiveNodeColor, 'x': 677, 'y': 339, 'size': 1 });
-      edges.push({'id': (data[source] + '-' + key), 'source': data[source], 'target': (data[source] + ":" + data[key]), 'label': key, 'size': 2});
-
-      //name
-      key = 'name';
-      nodes.push({'id': (data[source] + ":" + data[key]), 'label': data[key], 'color': inactiveNodeColor, 'x': 450, 'y': 90, 'size': 1 });
-      edges.push({'id': (data[source] + '-' + key), 'source': data[source], 'target': (data[source] + ":" + data[key]), 'label': key, 'size': 2});
-
-      // put everything else around it
+      // render the graph 
       service.graphList['nodes'] = nodes;
       service.graphList['edges'] =  edges;
       $rootScope.$broadcast('graph.update');
+    },
+    
+    showDetails: function(guardian, details) {
+      var nodes = [];
+      var edges = [];
+      
+      var detailKeys = [
+        {
+          'key': 'countryCode',
+          'x': 286,
+          'y': 131
+        },
+        {
+          'key': 'toponymName',
+          'x': 700,
+          'y': 131
+        },
+        {
+          'key': 'population',
+          'x': 266,
+          'y': 313
+        },
+        {
+          'key': 'lat',
+          'x': 230,
+          'y': 205
+        },
+        {
+          'key': 'lng',
+          'x': 509,
+          'y': 350
+        },
+        {
+          'key': 'fcodeName',
+          'x': 677,
+          'y': 339
+        },
+        {
+          'key': 'name',
+          'x': 450,
+          'y': 90
+        }
+      ];
+
+      console.log(guardian);
+      // put guardian at the center
+      nodes.push({'id': guardian.id, 'label': guardian.name, 'color': activeNodeColor, 'x': xCenter, 'y': yCenter, 'size': centerNodeSize});
+
+      for (var index in detailKeys) {
+        //console.log(detailKeys[index]);
+        var key = detailKeys[index].key;
+        nodes.push({
+          'id': (guardian.id + ':'+ details[key]),
+          'label': details[key] + '',
+          'color': inactiveNodeColor,
+          'x': detailKeys[index].x,
+          'y': detailKeys[index].y,
+          'size': 1
+        });
+        edges.push({
+          'id': (guardian.id + '-'+ key),
+          'source': guardian.id,
+          'target': (guardian.id + ':' + details[key]),
+          'label': key,
+          'size': 2
+        });
+      }
+
+      // render the graph 
+      service.graphList['nodes'] = nodes;
+      service.graphList['edges'] =  edges;
+
+      if (service.breadCrumbs.length == 0) {
+        service.breadCrumbs.push({'node': guardian.id, 'label': guardian.name, 'mode': homeTag});
+      }
+      else {
+        service.breadCrumbs.push({'node': guardian.id, 'label': guardian.name, 'mode': detailsTag});
+      }
+
+      $rootScope.$broadcast('graph.update');
+    },
+
+    focusNode: function(node) {
+      var nodes = [];
+      var edges = [];
+
+      node.x = '500';
+      node.y = '200';
+      nodes.push(node);
+      service.graphList['nodes'] = nodes;
+      service.graphList['edges'] = edges;
     }
   };
   
   return service;
 }]);
+
+/*
+      //countryCode
+      var key = 'countryCode';
+      nodes.push({'id': (details[source] + ':' + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 286, 'y': 131, 'size': 1 });
+      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ':' + details[key]), 'label': key, 'size': 2});
+      
+      //toponymName
+      key = 'toponymName';
+      nodes.push({'id': (details[source] + ':' + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 700, 'y': 131, 'size': 1 });
+      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ':' + details[key]), 'label': key, 'size': 2});
+
+      //population
+      key = 'population';
+      nodes.push({'id': ( + ':' + details[key]), 'label': '' + details[key], 'color': inactiveNodeColor, 'x': 266, 'y': 313, 'size': 1 });
+      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ':' + details[key]), 'label': key, 'size': 2});
+
+      //lat
+      key = 'lat';
+      nodes.push({'id': (details[source] + ':' + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 230, 'y': 205, 'size': 1 });
+      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ':' + details[key]), 'label': key, 'size': 2});
+
+      //lng
+      key = 'lng';
+      nodes.push({'id': (details[source] + ':' + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 509, 'y': 350, 'size': 1 });
+      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ':' + details[key]), 'label': key, 'size': 2});
+
+      //fcodeName
+      key = 'fcodeName';
+      nodes.push({'id': (details[source] + ":" + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 677, 'y': 339, 'size': 1 });
+      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ":" + details[key]), 'label': key, 'size': 2});
+
+      //name
+      key = 'name';
+      nodes.push({'id': (details[source] + ":" + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 450, 'y': 90, 'size': 1 });
+      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ":" + details[key]), 'label': key, 'size': 2});
+      */
+
