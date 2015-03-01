@@ -66,33 +66,38 @@ angular.module('render', ['process'])
 
   // double click event triggers action on enabled nodes
   $scope.sigma.bind('doubleClickNode', function(e) {
-    console.log(e);
-    console.log(Graph.enabledNode(e.data.node));
+    //console.log(e);
+    //console.log(Graph.enabledNode(e.data.node));
 
     if (Graph.enabledNode(e.data.node)) {
-      console.log("double click event to grab children");
+      //console.log("double click event to grab children");
       $scope.$root.$broadcast('graph.getChildren', e.data.node); //show children
     }
   });
 
   $scope.sigma.bind('clickNode', function(e) {
-    console.log(e.data.node);
+    //console.log(e.data.node);
     //console.log();
 
-    if (Graph.centerNode(e.data.node)) {
-      console.log("left click event to show details");
+    // only show details for the center node
+    if (Graph.centerNode(e.data.node) && !Graph.inDetailsMode(e.data.node)) {
+      //console.log("left click event to show details");
       $scope.$root.$broadcast('graph.showDetails', e.data.node); // show details
     }
   });
 
+  $scope.breadCrumbs = [];
+
   // update the graph 
   $scope.$on('graph.update', function(event) {
-    console.log(Graph.graphList.nodes);
-    console.log(Graph.graphList.edges);
+    //console.log(Graph.graphList.nodes);
+    //console.log(Graph.graphList.edges);
     $scope.sigma.graph.clear();
     var g = {'nodes': Graph.graphList.nodes, 'edges': Graph.graphList.edges};
     $scope.sigma.graph.read(g);
     $scope.sigma.refresh();
+    console.log(Graph.breadCrumbs);
+    $scope.breadCrumbs = Graph.breadCrumbs;
   });
   
   //$scope.data = Query.getDetail("Australia");
@@ -128,6 +133,15 @@ angular.module('render', ['process'])
       return false;
     },
 
+    inDetailsMode: function(node) {
+      //console.log(node);
+      var recent = service.breadCrumbs[service.breadCrumbs.length - 1];
+      if (node.id == recent.node && (recent.mode == detailsTag || recent.mode == homeTag)) {
+        return true;
+      }
+      return false;
+    },
+
     showChildren: function(guardian, children) {
       var nodes = [];
       var edges = [];
@@ -135,8 +149,8 @@ angular.module('render', ['process'])
       var keyList = [];
       var valList = [];
 
-      console.log(guardian);
-      console.log(children);
+      //console.log(guardian);
+      //console.log(children);
       // make center node guardian
       nodes.push({'id': guardian['id'], 'label': guardian['name'], 'color': activeNodeColor, 'x': xCenter, 'y': yCenter, 'size': centerNodeSize});
 
@@ -198,7 +212,7 @@ angular.module('render', ['process'])
         }
       ];
 
-      console.log(guardian);
+      //console.log(guardian);
       // put guardian at the center
       nodes.push({'id': guardian.id, 'label': guardian.name, 'color': activeNodeColor, 'x': xCenter, 'y': yCenter, 'size': centerNodeSize});
 

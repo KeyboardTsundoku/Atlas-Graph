@@ -60,9 +60,9 @@ app.service('processService',['$rootScope', '$http', function($rootScope, $http)
       for (var index in children) {
         var child = children[index];
         var mini = {'name': child.name, 'id': child.geonameId, 'relationship': child.fcode};
-        console.log(id);
-        console.log(mini);
-        console.log(service.places[id].children);
+        //console.log(id);
+        //console.log(mini);
+        //console.log(service.places[id].children);
         service.places[id].children.push(mini);
         service.places[mini.id] = {};
         service.places[mini.id].details = child;
