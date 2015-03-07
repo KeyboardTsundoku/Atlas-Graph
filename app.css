@@ -1,0 +1,19 @@
+#container {
+  max-width: 1000px;
+  height: 400px;
+  margin: auto;
+  background-color: #FFFAF0;
+}
+
+#loadingImage {
+  margin: auto;
+  z-index: 10;
+  position: absolute;
+}
+
+#map-canvas {
+  height: 200px;
+  width: 200px;
+  margin: 0px;
+  padding: 0px;
+}

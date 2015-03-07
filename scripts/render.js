@@ -55,7 +55,7 @@ angular.module('render', ['process'])
       edgeHoverColor:'default',
       defaultEdgeHoverColor: '#000',
       edgeHoverSizeRatio: 1,
-      //edgeHoverExtremities: true,
+      edgeHoverExtremities: true,
       minEdgeSize: 0.5,
       maxEdgeSize: 4,
       doubleClickEnabled: false
@@ -65,7 +65,7 @@ angular.module('render', ['process'])
   var dragListener = sigma.plugins.dragNodes($scope.sigma, $scope.sigma.renderers[0]);
 
   // double click event triggers action on enabled nodes
-  $scope.sigma.bind('doubleClickNode', function(e) {
+  $scope.sigma.bind('clickNode', function(e) {
     //console.log(e);
     //console.log(Graph.enabledNode(e.data.node));
 
@@ -75,14 +75,24 @@ angular.module('render', ['process'])
     }
   });
 
-  $scope.sigma.bind('clickNode', function(e) {
+  $scope.sigma.bind('clickStage', function(e) {
     //console.log(e.data.node);
     //console.log();
 
+    if (Graph.graphList.nodes == null) {
+      return;
+    }
+
+    var node = Graph.graphList.nodes[0];
     // only show details for the center node
-    if (Graph.centerNode(e.data.node) && !Graph.inDetailsMode(e.data.node)) {
-      //console.log("left click event to show details");
-      $scope.$root.$broadcast('graph.showDetails', e.data.node); // show details
+    if (Graph.centerNode(node)) {
+      if (Graph.inDetailsMode(node)) {
+        $scope.$root.$broadcast('graph.getChildren', node); // show children
+      }
+      else {
+        //console.log("left click event to show details");
+        $scope.$root.$broadcast('graph.showDetails', node); // show details
+      }
     }
   });
 
@@ -96,7 +106,7 @@ angular.module('render', ['process'])
     var g = {'nodes': Graph.graphList.nodes, 'edges': Graph.graphList.edges};
     $scope.sigma.graph.read(g);
     $scope.sigma.refresh();
-    console.log(Graph.breadCrumbs);
+    //console.log(Graph.breadCrumbs); //show breadcrumbs on console
     $scope.breadCrumbs = Graph.breadCrumbs;
   });
   
@@ -136,7 +146,7 @@ angular.module('render', ['process'])
     inDetailsMode: function(node) {
       //console.log(node);
       var recent = service.breadCrumbs[service.breadCrumbs.length - 1];
-      if (node.id == recent.node && (recent.mode == detailsTag || recent.mode == homeTag)) {
+      if (node.id == recent.node && recent.mode == detailsTag) {
         return true;
       }
       return false;
@@ -149,8 +159,8 @@ angular.module('render', ['process'])
       var keyList = [];
       var valList = [];
 
-      //console.log(guardian);
-      //console.log(children);
+      console.log(guardian);
+      console.log(children);
       // make center node guardian
       nodes.push({'id': guardian['id'], 'label': guardian['name'], 'color': activeNodeColor, 'x': xCenter, 'y': yCenter, 'size': centerNodeSize});
 
@@ -220,7 +230,7 @@ angular.module('render', ['process'])
         //console.log(detailKeys[index]);
         var key = detailKeys[index].key;
         nodes.push({
-          'id': (guardian.id + ':'+ details[key]),
+          'id': (guardian.id + ':'+ key),
           'label': details[key] + '',
           'color': inactiveNodeColor,
           'x': detailKeys[index].x,
@@ -228,9 +238,9 @@ angular.module('render', ['process'])
           'size': 1
         });
         edges.push({
-          'id': (guardian.id + '-'+ key),
+          'id': key,
           'source': guardian.id,
-          'target': (guardian.id + ':' + details[key]),
+          'target': (guardian.id + ':' + key),
           'label': key,
           'size': 2
         });
@@ -240,13 +250,10 @@ angular.module('render', ['process'])
       service.graphList['nodes'] = nodes;
       service.graphList['edges'] =  edges;
 
-      if (service.breadCrumbs.length == 0) {
-        service.breadCrumbs.push({'node': guardian.id, 'label': guardian.name, 'mode': homeTag});
-      }
-      else {
-        service.breadCrumbs.push({'node': guardian.id, 'label': guardian.name, 'mode': detailsTag});
-      }
+      service.breadCrumbs.push({'node': guardian.id, 'label': guardian.name, 'mode': detailsTag});
 
+      console.log(nodes);
+      console.log(edges);
       $rootScope.$broadcast('graph.update');
     },
 
@@ -259,46 +266,23 @@ angular.module('render', ['process'])
       nodes.push(node);
       service.graphList['nodes'] = nodes;
       service.graphList['edges'] = edges;
+    },
+    
+    showCountry: function(node) {
+        var nodes = [];  
+        nodes.push({'id': node.id, 'label': node.name, 'color': activeNodeColor, 'x': xCenter, 'y': yCenter, 'size': centerNodeSize});
+        
+        service.graphList['nodes'] = nodes;
+        service.graphList['edges'] = [];
+        
+        service.breadCrumbs.push({'node': node.id, 'label': node.name, 'mode': homeTag});
+        $rootScope.$broadcast('graph.update');
     }
+
   };
-  
+
+   
   return service;
 }]);
 
-/*
-      //countryCode
-      var key = 'countryCode';
-      nodes.push({'id': (details[source] + ':' + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 286, 'y': 131, 'size': 1 });
-      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ':' + details[key]), 'label': key, 'size': 2});
-      
-      //toponymName
-      key = 'toponymName';
-      nodes.push({'id': (details[source] + ':' + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 700, 'y': 131, 'size': 1 });
-      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ':' + details[key]), 'label': key, 'size': 2});
-
-      //population
-      key = 'population';
-      nodes.push({'id': ( + ':' + details[key]), 'label': '' + details[key], 'color': inactiveNodeColor, 'x': 266, 'y': 313, 'size': 1 });
-      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ':' + details[key]), 'label': key, 'size': 2});
-
-      //lat
-      key = 'lat';
-      nodes.push({'id': (details[source] + ':' + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 230, 'y': 205, 'size': 1 });
-      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ':' + details[key]), 'label': key, 'size': 2});
-
-      //lng
-      key = 'lng';
-      nodes.push({'id': (details[source] + ':' + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 509, 'y': 350, 'size': 1 });
-      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ':' + details[key]), 'label': key, 'size': 2});
-
-      //fcodeName
-      key = 'fcodeName';
-      nodes.push({'id': (details[source] + ":" + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 677, 'y': 339, 'size': 1 });
-      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ":" + details[key]), 'label': key, 'size': 2});
-
-      //name
-      key = 'name';
-      nodes.push({'id': (details[source] + ":" + details[key]), 'label': details[key], 'color': inactiveNodeColor, 'x': 450, 'y': 90, 'size': 1 });
-      edges.push({'id': (details[source] + '-' + key), 'source': details[source], 'target': (details[source] + ":" + details[key]), 'label': key, 'size': 2});
-      */
 

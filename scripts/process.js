@@ -11,16 +11,16 @@ app.controller('processController', ['$http', '$scope', 'queryService', 'graphSe
     //console.log(term);
     //console.log(details);
     Process.newCountry(details.geonameId, details);
-    Graph.showDetails({'name': term, 'id': details.geonameId}, details);
+    Graph.showCountry({'name': term, 'id': details.geonameId});
   });
 
   $scope.$on('graph.getChildren', function(event, node) {
-    //console.log("get children has been hit");
+    console.log("get children has been hit");
     //console.log(node);
 
     var children = Process.getChildren(node.id);
     if (children != null) {
-      //console.log("it already exists");
+      console.log("it already exists");
       Graph.showChildren({'name': node.label, 'id': node.id}, children);
     }
     else {
@@ -28,20 +28,20 @@ app.controller('processController', ['$http', '$scope', 'queryService', 'graphSe
 
       $http.get(url)
         .success(function(data) {
-          //console.log(data);
+          console.log(data);
           Process.addChildren(node.id, data.geonames);
           //console.log(Process.places);
           Graph.showChildren({'name': node.label, 'id': node.id}, Process.getChildren(node.id));
         })
         .error(function(data) {
           children = "no more children";
-          //console.log("there were no more children here....");
+          console.log("there were no more children here....");
         });
       }
   });
 
   $scope.$on('graph.showDetails', function(event, node) {
-   Graph.showDetails({'name': node.label, 'id': node.id}, Process.getDetails(node.id)); 
+    Graph.showDetails({'name': node.label, 'id': node.id}, Process.getDetails(node.id)); 
   });
 
 }]);
@@ -53,6 +53,12 @@ app.service('processService',['$rootScope', '$http', function($rootScope, $http)
     newCountry: function(id, details) {
       service.places[id] = {};
       service.places[id].details = details;
+      var guardian = {
+        'name': service.places[id].details.name,
+        'lat': service.places[id].details.lat,
+        'lng': service.places[id].details.lng
+      };
+      $rootScope.$broadcast('map.update', guardian); // show guardian in map
     },
 
     addChildren: function(id, children) {
@@ -74,6 +80,12 @@ app.service('processService',['$rootScope', '$http', function($rootScope, $http)
     },
 
     getChildren: function(id) {
+      var guardian = {
+        'name': service.places[id].details.name,
+        'lat': service.places[id].details.lat,
+        'lng': service.places[id].details.lng
+      };
+      $rootScope.$broadcast('map.update', guardian); // show guardian in map
       return service.places[id].children;
     }
   };

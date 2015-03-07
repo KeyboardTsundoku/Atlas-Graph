@@ -1,3 +1,3 @@
-angular.module('Atlas-Graph', ['search', 'process', 'render'])
+angular.module('Atlas-Graph', ['ui.bootstrap', 'search', 'process', 'render', 'map'])
 
 

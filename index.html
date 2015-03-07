@@ -2,27 +2,17 @@
 <html ng-app="Atlas-Graph">
 <head>
   <title>Atlas Graph</title>
-  <style type="text/css">
-    #container {
-      max-width: 1000px;
-      height: 400px;
-      margin: auto;
-      background-color: #FFFAF0;
-    }
-    #loadingImage {
-      margin: auto;
-      z-index: 10;
-      position: absolute;
-    }
-  </style>
+  <link rel="stylesheet" href="app.css">
+  <link rel="stylesheet" href="vendor/css/bootstrap.min.css">
 </head>
 <body>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular.js"></script>
+  <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false"></script>
   <script src="vendor/js/sigma.min.js"></script>
   <script src="vendor/js/sigma.renderers.edgeLabels.min.js"></script>
   <script src="vendor/js/sigma.plugins.dragNodes.min.js"></script>
   <script src="vendor/js/sigma.misc.drawHovers.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular.js"></script>
-
+  <script src="vendor/js/ui-bootstrap-tpls-0.12.1.min.js"></script>
   <script src="app.js"></script>
   <script src="scripts/search.js"></script>
   <script src="scripts/process.js"></script>
@@ -31,5 +21,6 @@
   
   <ag-search></ag-search>
   <ag-graph ng-controller="processController"></ag-graph>
+  <ag-map></ag-map>
 </body>
 </html>
