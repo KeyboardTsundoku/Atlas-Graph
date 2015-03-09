@@ -1,0 +1,15 @@
+<form class="form-horizontal">
+  <div class="form-group">
+    <div class="col-md-9 col-md-offset-1" dropdown>
+      <input class="form-control" type="search"  placeholder="Type a Country name...." ng-model="query" dropdown-toggle>
+      <ul class="dropdown-menu scrollable-menu">
+        <li ng-repeat="country in countries | filter:query"><a ng-click="select(country)">{{country}}</a></li>
+      </ul>
+    </div>
+    <button class="btn btn-default" ng-click="search()">
+      <i class="icon-search"></i> Search
+    </button>
+  </div>
+</form>
+<query-loading ng-controller="loadingController" ng-show="isLoading"></query-loading>
+<!--<pre>{{query}}</pre>-->

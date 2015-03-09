@@ -1,0 +1,8 @@
+<div class="btn-group" dropdown>
+  <button type="button" class="btn btn-primary" dropdown-toggle>
+    Traversal <i class="icon-chevron-sign-down"></i>
+  </button>
+  <ul class="dropdown-menu scrollable-menu" ng-show="breadCrumbs.length > 0">
+    <li ng-repeat="crumb in breadCrumbs"><a ng-click="select(crumb)">{{crumb.label}}: {{crumb.mode}}</a></li>
+  </ul>
+</div>
