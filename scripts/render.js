@@ -36,12 +36,41 @@ angular.module('render', ['process'])
     templateUrl: 'partials/graph.html'
   };
 }])
+.directive('agTraversal', ['graphService', function(Graph) {
+  return {
+    restrict: 'E',
+    controller: function($scope) {
+      $scope.breadCrumbs = [];
+      $scope.$on('graph.update', function(event) {
+        $scope.breadCrumbs = Graph.breadCrumbs;
+        //$scope.$apply()
+        //console.log($scope.breadCrumbs);
+      });
+
+      $scope.select = function(element) {
+        console.log("this ought to do stuff");
+        console.log(element);
+
+        if (element.mode == Graph.childrenTag) {
+          $scope.$root.$broadcast('graph.getChildren', {'label': element.label, 'id': element.node});  
+        }
+        else if (element.mode == Graph.detaisTag) {
+          $scope.$root.$broadcast('graph.showDetails', {'label': element.label, 'id': element.node});
+        }
+        else {
+          Graph.showCountry({'name': element.label, 'id': element.node});
+        }
+      };
+    },
+    templateUrl: 'partials/traversal.html'
+  };
+}])
 .controller('graphController',['$scope', 'queryService', 'graphService', function($scope, Query, Graph) {
 
     $scope.sigma = new sigma({
     graph: {nodes: [], edges: []},
     renderer: {
-      container: document.getElementById('container'),
+      container: document.getElementById('graph-container'),
       type: 'canvas'
     },
     settings: {
@@ -65,7 +94,7 @@ angular.module('render', ['process'])
   var dragListener = sigma.plugins.dragNodes($scope.sigma, $scope.sigma.renderers[0]);
 
   // double click event triggers action on enabled nodes
-  $scope.sigma.bind('clickNode', function(e) {
+  $scope.sigma.bind('doubleClickNode', function(e) {
     //console.log(e);
     //console.log(Graph.enabledNode(e.data.node));
 
@@ -84,6 +113,9 @@ angular.module('render', ['process'])
     }
 
     var node = Graph.graphList.nodes[0];
+    console.log(node);
+    console.log(Graph.centerNode(node));
+    console.log(Graph.inDetailsMode(node));
     // only show details for the center node
     if (Graph.centerNode(node)) {
       if (Graph.inDetailsMode(node)) {
@@ -96,8 +128,6 @@ angular.module('render', ['process'])
     }
   });
 
-  $scope.breadCrumbs = [];
-
   // update the graph 
   $scope.$on('graph.update', function(event) {
     //console.log(Graph.graphList.nodes);
@@ -107,27 +137,27 @@ angular.module('render', ['process'])
     $scope.sigma.graph.read(g);
     $scope.sigma.refresh();
     //console.log(Graph.breadCrumbs); //show breadcrumbs on console
-    $scope.breadCrumbs = Graph.breadCrumbs;
   });
   
   //$scope.data = Query.getDetail("Australia");
 }])
 .service('graphService', ['$rootScope', function($rootScope) {
-  var activeNodeColor = '#fff';
+  var activeNodeColor = 'green';
   var inactiveNodeColor = '#000';
   var centerNodeSize = 5;
   var endNodeSize = 2;
   var edgeColor = '';
-  var xCenter = 500;
+  var xCenter = 400;
   var yCenter = 200;
-
-  var homeTag = 'first';
-  var detailsTag = 'information';
-  var childrenTag = 'subdivision';
 
   var service = {
     graphList: {},
     breadCrumbs: [],
+
+    homeTag: 'first',
+    detailsTag: 'information',
+    childrenTag: 'subdivision',
+
 
     enabledNode: function(node) {
       if (node.color == activeNodeColor) {
@@ -145,8 +175,8 @@ angular.module('render', ['process'])
 
     inDetailsMode: function(node) {
       //console.log(node);
-      var recent = service.breadCrumbs[service.breadCrumbs.length - 1];
-      if (node.id == recent.node && recent.mode == detailsTag) {
+      var recent = service.breadCrumbs[0];
+      if (node.id == recent.node && recent.mode == service.detailsTag) {
         return true;
       }
       return false;
@@ -166,13 +196,13 @@ angular.module('render', ['process'])
 
       for (var index in children) {
         var child = children[index];
-        var xPosition = Math.floor((Math.random() * 1000) + 1);
-        var yPosition = Math.floor((Math.random() * 400) + 1);
+        var xPosition = Math.floor((Math.random() * xCenter * 2) + 1);
+        var yPosition = Math.floor((Math.random() * yCenter * 2) + 1);
         nodes.push({'id': child['id'], 'label': child['name'], 'color': activeNodeColor, 'x': xPosition, 'y': yPosition, 'size': endNodeSize});
         edges.push({'id': (guardian['id'] + '-' + child['id']), 'source': guardian['id'], 'target': child['id'], 'label': child['relationship'], 'size': 2});
       }
         
-      service.breadCrumbs.push({'node': guardian.id, 'label': guardian.name, 'mode': childrenTag});
+      service.breadCrumbs.unshift({'node': guardian.id, 'label': guardian.name, 'mode': service.childrenTag});
       
       // render the graph 
       service.graphList['nodes'] = nodes;
@@ -250,7 +280,7 @@ angular.module('render', ['process'])
       service.graphList['nodes'] = nodes;
       service.graphList['edges'] =  edges;
 
-      service.breadCrumbs.push({'node': guardian.id, 'label': guardian.name, 'mode': detailsTag});
+      service.breadCrumbs.unshift({'node': guardian.id, 'label': guardian.name, 'mode': service.detailsTag});
 
       console.log(nodes);
       console.log(edges);
@@ -275,7 +305,7 @@ angular.module('render', ['process'])
         service.graphList['nodes'] = nodes;
         service.graphList['edges'] = [];
         
-        service.breadCrumbs.push({'node': node.id, 'label': node.name, 'mode': homeTag});
+        service.breadCrumbs.unshift({'node': node.id, 'label': node.name, 'mode': service.homeTag});
         $rootScope.$broadcast('graph.update');
     }
 

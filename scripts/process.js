@@ -4,12 +4,7 @@ app.controller('processController', ['$http', '$scope', 'queryService', 'graphSe
   $scope.$on('query.update', function(event) {
     var term = Query.getRecentQuery();
     var details = Query.getDetail(term);
-    //$scope.$apply();
-    //Graph.addData($scope.data);
 
-    //Process.addDetails(term)
-    //console.log(term);
-    //console.log(details);
     Process.newCountry(details.geonameId, details);
     Graph.showCountry({'name': term, 'id': details.geonameId});
   });
@@ -17,13 +12,13 @@ app.controller('processController', ['$http', '$scope', 'queryService', 'graphSe
   $scope.$on('graph.getChildren', function(event, node) {
     console.log("get children has been hit");
     //console.log(node);
-
     var children = Process.getChildren(node.id);
     if (children != null) {
       console.log("it already exists");
       Graph.showChildren({'name': node.label, 'id': node.id}, children);
     }
     else {
+      $scope.$root.$broadcast('loading');
       var url = "http://api.geonames.org/childrenJSON?username=sytheris&geonameId=" + node.id;       
 
       $http.get(url)

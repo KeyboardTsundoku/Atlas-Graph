@@ -1,19 +1,29 @@
-#container {
-  max-width: 1000px;
-  height: 400px;
-  margin: auto;
+#graph-container {
+  max-width: 800px;
+  max-height: 400px;
+  height: 100%;
+  width: 100%;
   background-color: #FFFAF0;
 }
 
-#loadingImage {
-  margin: auto;
-  z-index: 10;
-  position: absolute;
+.img-center {
+  margin: 0 auto;
 }
 
 #map-canvas {
-  height: 200px;
-  width: 200px;
-  margin: 0px;
-  padding: 0px;
+  height: 400px;
+  width: 400px;
+}
+
+.modal-backdrop {
+  bottom: 0;
+}
+
+.scrollable-menu {
+  height: auto;
+  max-height: 200px;
+  overflow-x: hidden;
+}
+body {
+  margin: 10px 20px;
 }

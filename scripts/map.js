@@ -6,14 +6,14 @@ app.directive('agMap', function() {
     controller: ['$scope', '$timeout', function($scope, $timeout) {
       var myLatlng = new google.maps.LatLng(-25.363882,131.044922);
       var mapOptions = {
-        zoom: 4,
+        zoom: 1,
         center: myLatlng
       };
       
       $scope.map = new google.maps.Map(document.getElementById('map-canvas'), mapOptions);
       
       $scope.marker = new google.maps.Marker({
-        position: myLatlng,
+        position: null,
         map: $scope.map,
         title: 'default'
       });
@@ -31,15 +31,10 @@ app.directive('agMap', function() {
         console.log(region); 
         var latLng = new google.maps.LatLng(region.lat, region.lng);
         $scope.map.setCenter(latLng);
+        $scope.map.setZoom(4);
         $scope.marker.setPosition(latLng);
         $scope.marker.setTitle(region.name);
       });
-      /*
-      $scope.openInfoWindow = function(e, selectedMarker) {
-        e.preventDefault();
-        google.maps.event.trigger(selectedMarker, 'click');
-      };
-      */
     }],
     templateUrl: 'partials/map.html'
   };

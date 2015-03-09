@@ -4,6 +4,7 @@
   <title>Atlas Graph</title>
   <link rel="stylesheet" href="app.css">
   <link rel="stylesheet" href="vendor/css/bootstrap.min.css">
+  <link href="//netdna.bootstrapcdn.com/font-awesome/3.2.1/css/font-awesome.css" rel="stylesheet">
 </head>
 <body>
   <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.9/angular.js"></script>
@@ -18,9 +19,30 @@
   <script src="scripts/process.js"></script>
   <script src="scripts/render.js"></script>
   <script src="scripts/map.js"></script>
-  
-  <ag-search></ag-search>
-  <ag-graph ng-controller="processController"></ag-graph>
-  <ag-map></ag-map>
+
+  <div class="container-fluid">  
+    <div class="row pull-right">
+      <div class="btn-group" role="group">
+        <button ng-controller="helpController" ng-click="dialog()" class="btn btn-info">Help</button>
+        <a href="https://github.com/Tsundoku-Dev/Atlas-Graph" target="_blank" class="btn btn-primary">Home</a>
+        <a href="http://www.tsundoku-dev.com" target="_blank" class="btn btn-default">Contact</a>
+      </div>
+    </div>
+   <div class="row">
+      <div class="col-md-4 col-md-offset-5">
+        <h1><i class="icon-globe"></i> Atlas Graph</h1>
+      </div>
+    </div>
+    <div class="row">
+      <ag-search ng-controller="init"></ag-search>
+    </div>
+    <div class="row">
+      <div class="col-md-8">
+          <ag-traversal class="pull-left"></ag-traversal>
+          <ag-graph ng-controller="processController"></ag-graph>
+      </div>
+      <ag-map class="col-md-4"></ag-map>
+    </div>
+  </div>
 </body>
 </html>
